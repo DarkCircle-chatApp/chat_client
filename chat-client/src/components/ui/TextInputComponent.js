@@ -2,9 +2,25 @@ import React from "react";
 
 import styled from "styled-components";
 
+// password input박스
+const StyledInput = styled.input`
+    border: none;
+    width: calc(90% - 32px);
+    padding: 16px;
+    font-size: 20px;
+    line-height: 15px;
+
+    ${(props) => props.height &&
+      `
+      height: ${props.height}px;
+      `}
+`;
+
 // textarea
 const StyledTextarea = styled.textarea`
-    width: calc(100% - 32px);
+    border: none;
+    resize: none;  // 크기 조정 방지 
+    width: calc(90% - 32px);
 
     // height prop이 존재하는 경우 해당 값 적용
     ${(props) => props.height &&
@@ -13,16 +29,28 @@ const StyledTextarea = styled.textarea`
       `}
       
     padding: 16px;
-    font-size: 16px;
-    line-height: 20px;
+    font-size: 20px;
+    line-height: 15px;
 `;
 
-// TextInput 컴포넌트 정의
-function TextInput(props) {
-    const { height, value, onChange } = props; // props에서 height, value, onChange 구조 분해 할당
-
-    // StyledTextarea 렌더링. height, value, onChange 속성 전달
-    return <StyledTextarea height={height} value={value} onChange={onChange} />;
+// TextInput 컴포넌트
+function TextInput({ height, value, onChange, onKeyDown, type }) {
+  return type === "password" ? (
+      <StyledInput
+          type="password"
+          height={height}
+          value={value}
+          onChange={onChange}
+          onKeyDown={onKeyDown}
+      />
+  ) : (
+      <StyledTextarea
+          height={height}
+          value={value}
+          onChange={onChange}
+          onKeyDown={onKeyDown}
+      />
+  );
 }
 
 export default TextInput;

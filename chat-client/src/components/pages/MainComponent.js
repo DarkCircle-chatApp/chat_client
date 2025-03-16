@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import { FaEye, FaEyeSlash } from "react-icons/fa"; // 눈 모양 아이콘 추가
 import Button from "../ui/ButtonComponent";
 import TextInput from "../ui/TextInputComponent";
 
@@ -14,7 +15,7 @@ const PageWrapper = styled.div`
     align-items: center;
 `;
 
-const SignupContainer = styled.div`
+const LoginContainer = styled.div`
     position: relative;
     width: 1325px;
     height: 1080px;
@@ -39,6 +40,7 @@ const InputContainer = styled.div`
     flex-direction: column;
     align-items: flex-start;
     width: 575px;
+    border: none;
 `;
 
 const InputLabel = styled.label`
@@ -49,6 +51,21 @@ const InputLabel = styled.label`
     margin-bottom: 5px;
 `;
 
+const PasswordWrapper = styled.div`
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+`;
+
+const EyeIcon = styled.div`
+    position: absolute;
+    right: 10px;
+    cursor: pointer;
+    color: #9D9D9D;
+    font-size: 20px;
+`;
+
 const Line = styled.div`
     width: 575px;
     height: 1px;
@@ -56,7 +73,7 @@ const Line = styled.div`
     margin-bottom: 20px;
 `;
 
-const SignupButton = styled(Button)`
+const LoginButton = styled(Button)`
     width: 575px;
     height: 60px;
     background: #5B86E5;
@@ -67,7 +84,7 @@ const SignupButton = styled(Button)`
     margin-top: 10px;
 `;
 
-const LoginText = styled.p`
+const SignupText = styled.p`
     font-family: 'Telegraf', sans-serif;
     font-size: 16px;
     color: #000000;
@@ -75,30 +92,34 @@ const LoginText = styled.p`
     cursor: pointer;
 `;
 
-function SignupPage() {
+function LoginPage() {
     const navigate = useNavigate();
-    const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [seePassword, setSeePassword] = useState(false); // 기본값 : 비밀번호 숨김
 
-    const signupHandler = () => {
-        console.log("회원가입 시도:", name, email, password);
-        navigate("/");
+    const seePasswordHandler = () => {
+        setSeePassword(!seePassword);
+    };
+
+    const loginHandler = () => {
+        console.log("로그인 시도:", email, password);
+        navigate("/chat");
+    };
+
+    const keyDownHandler = (e) => {
+        console.log("Key pressed:", e.key);
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            loginHandler();
+        }
     };
 
     return (
         <PageWrapper>
-            <SignupContainer>
-                <Title>Create Account</Title>
+            <LoginContainer>
+                <Title>Sign-in</Title>
                 <InputContainer>
-                    <InputLabel>Full Name</InputLabel>
-                    <TextInput 
-                        height={20}
-                        value={name}
-                        onChange={(event) => setName(event.target.value)}
-                        placeholder="이름 입력"
-                    />
-                    <Line />
                     <InputLabel>Email</InputLabel>
                     <TextInput 
                         height={20}
@@ -108,22 +129,28 @@ function SignupPage() {
                     />
                     <Line />
                     <InputLabel>Password</InputLabel>
-                    <TextInput
-                        height={20}
-                        value={password}
-                        onChange={(event) => setPassword(event.target.value)}
-                        placeholder="비밀번호 입력"
-                        type="password"
-                    />
+                    <PasswordWrapper>
+                        <TextInput
+                            height={20}
+                            value={password}
+                            type={seePassword ? "text" : "password"} // 상태에 따라 input 타입 변경
+                            onChange={(event) => setPassword(event.target.value)}
+                            onKeyDown={keyDownHandler}
+                            placeholder="비밀번호 입력"
+                        />
+                        <EyeIcon onClick={seePasswordHandler}>
+                            {seePassword ? <FaEye /> : <FaEyeSlash  />}
+                        </EyeIcon>
+                    </PasswordWrapper>
                     <Line />
                 </InputContainer>
-                <SignupButton title="회원가입" onClick={signupHandler} />
-                <LoginText onClick={() => navigate("/")}>
-                    Already have an account? Login
-                </LoginText>
-            </SignupContainer>
+                <LoginButton title="로그인" onClick={loginHandler} />
+                <SignupText onClick={() => navigate("/signup")}>
+                    Don’t have an account? Signup Here
+                </SignupText>
+            </LoginContainer>
         </PageWrapper>
     );
 }
 
-export default SignupPage;
+export default LoginPage;
