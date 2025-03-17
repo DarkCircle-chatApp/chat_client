@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import styled, { createGlobalStyle } from "styled-components";
+// import styled, { createGlobalStyle } from "styled-components";
 import TextInput from "../ui/TextInputComponent";
 import Button from "../ui/ButtonComponent";
 import { useNavigate } from "react-router-dom";
@@ -13,7 +13,8 @@ function ChatPage() {
 
     // 메시지 전송 핸들러
     const sendMessageHandler = () => {
-        if (message.trim()) {
+        // console.log(message);
+        if (message.trim()) { // 공백일때는 실행 x
             setMessages([...messages, message]); // 기존 메시지에 새 메시지 추가
             setMessage(""); // 입력 필드 초기화
         }
