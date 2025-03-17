@@ -97,6 +97,7 @@ function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [seePassword, setSeePassword] = useState(false); // 기본값 : 비밀번호 숨김
+    // const [loginCheck, setLoginCheck] = useState(false);   // 로그인 상태
 
     const seePasswordHandler = () => {
         setSeePassword(!seePassword);
