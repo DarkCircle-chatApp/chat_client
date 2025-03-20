@@ -105,7 +105,7 @@ function LoginPage() {
 
     const loginHandler = () => {
         console.log("로그인 시도:", email, password);
-        navigate("/chat");
+        navigate("/chat/1");    // 나중에 userid부분 수정
     };
 
     const keyDownHandler = (e) => {

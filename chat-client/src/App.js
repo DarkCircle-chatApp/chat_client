@@ -18,7 +18,7 @@ function App(props) {
         <Routes>
                 <Route path="/" element={<MainComponent />} />
                 <Route path="/signup" element={<SignupComponent />} />
-                <Route path="/chat" element={<ChatComponent />} />
+                <Route path="/chat/:userid" element={<ChatComponent />} />
         </Routes>
     </BrowserRouter>
   );

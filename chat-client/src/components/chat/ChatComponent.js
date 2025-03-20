@@ -1,22 +1,57 @@
-import React, { useState } from "react";
-// import styled, { createGlobalStyle } from "styled-components";
+import React, { useState, useEffect } from "react";
 import TextInput from "../ui/TextInputComponent";
 import Button from "../ui/ButtonComponent";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import "./ChatPage.css";
 
 function ChatPage() {
     const [messages, setMessages] = useState([]); // 메시지 목록
     const [message, setMessage] = useState(""); // 입력 메시지
-    const [participants] = useState(["박관호"]); // 참여자 목록. 나중에 하드코딩 대신 db에서 로그인정보 불러와야함
+    // const [userid] = useState(1); // 임시방편
+    const { userid } = useParams();
     const navigate = useNavigate();
 
-    // 메시지 전송 핸들러
-    const sendMessageHandler = () => {
+    // 메시지 목록 랜더링
+    const getAllMessages = async () => {
+        try {
+            const response = await fetch(`http://localhost:8090/chat/getAllMessages`);
+            if (response.ok) {
+                const data = await response.json();
+                setMessages(data); // 서버에서 받은 메시지 목록 업데이트
+            } else {
+                console.error("Failed to fetch messages");
+            }
+        } catch (error) {
+            console.error("Error fetching messages:", error);
+        }
+    };
+
+    // 메시지 전송
+    const sendMessageHandler = async () => {
         console.log(message);
-        if (message.trim()) { // 공백일때는 실행 x
-            setMessages([...messages, message]); // 기존 메시지에 새 메시지 추가
-            setMessage(""); // 입력 필드 초기화
+        if (message.trim()) {
+            try {
+                // 서버로 메시지 전송
+                const response = await fetch(`http://localhost:8090/chat/${userid}/sendMessage`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        message: message, // 보낼 메시지
+                    }),
+                });
+
+                if (response.ok) {
+                    // 메시지 전송 후 메시지 목록 업데이트
+                    setMessages([...messages, { message }]);
+                    setMessage(""); // 입력 필드 초기화
+                } else {
+                    console.error("Failed to send message");
+                }
+            } catch (error) {
+                console.error("Error sending message:", error);
+            }
         }
     };
 
@@ -28,6 +63,11 @@ function ChatPage() {
         }
     };
 
+    // 페이지 처음 로드될 때, 메시지 변경될 때마다 메시지 가져오기
+    useEffect(() => {
+        getAllMessages(); // 페이지 로드 시
+    },[]);
+
     return (
         <div className="page-wrapper">
             <div className="chat-container">
@@ -37,8 +77,8 @@ function ChatPage() {
 
                     {/* 채팅 메시지 표시 영역 */}
                     <div className="message-list">
-                        {messages.map((msg, index) => (
-                            <div key={index} className="message">{msg}</div>
+                        {Array.isArray(messages) && messages.map((msg, index) => (
+                            <div key={index} className="message">{msg.message}</div>
                         ))}
                     </div>
 
@@ -57,9 +97,7 @@ function ChatPage() {
                 {/* 오른쪽: 참여자 목록 */}
                 <div className="participants-container">
                     <h3 className="participants-title">참여자 목록</h3>
-                    {participants.map((participant, index) => (
-                        <div key={index} className="participant">{participant}</div>
-                    ))}
+                    <div className="participant">박관호</div>
                 </div>
             </div>
         </div>
