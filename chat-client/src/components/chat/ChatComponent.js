@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import TextInput from "../ui/TextInputComponent";
 import Button from "../ui/ButtonComponent";
 import { useNavigate, useParams } from "react-router-dom";
@@ -10,6 +10,7 @@ function ChatPage() {
     // const [userid] = useState(1); // 임시방편
     const { userid } = useParams();
     const navigate = useNavigate();
+    const messagesEndRef = useRef(null);
 
     // 메시지 목록 랜더링
     const getAllMessages = async () => {
@@ -18,6 +19,7 @@ function ChatPage() {
             if (response.ok) {
                 const data = await response.json();
                 setMessages(data); // 서버에서 받은 메시지 목록 업데이트
+                scrollToBottom();
             } else {
                 console.error("Failed to fetch messages");
             }
@@ -31,7 +33,7 @@ function ChatPage() {
         console.log(message);
         if (message.trim()) {
             try {
-                // 서버로 메시지 전송
+                // semdMessage 호출
                 const response = await fetch(`http://localhost:8090/chat/${userid}/sendMessage`, {
                     method: "POST",
                     headers: {
@@ -63,7 +65,17 @@ function ChatPage() {
         }
     };
 
-    // 페이지 처음 로드될 때, 메시지 변경될 때마다 메시지 가져오기
+    //스크롤 항상 맨 아래
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    // messages가 변경될 때마다 스크롤 맨 아래에 위치
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
+    // 페이지 처음 로드될 때, 메시지 변경될 때마다 메시지 목록 조회
     useEffect(() => {
         getAllMessages(); // 페이지 로드 시
     },[]);
