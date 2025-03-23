@@ -46,7 +46,7 @@ function ChatPage() {
 
                 if (response.ok) {
                     // 메시지 전송 후 메시지 목록 업데이트
-                    setMessages([...messages, { message }]);
+                    setMessages(prevMessages => [...prevMessages, { message }]);
                     setMessage(""); // 입력 필드 초기화
                 } else {
                     console.error("Failed to send message");
@@ -75,7 +75,21 @@ function ChatPage() {
         scrollToBottom();
     }, [messages]);
 
-    // 페이지 처음 로드될 때, 메시지 변경될 때마다 메시지 목록 조회
+    // 실시간 메시지 수신 (서버에서 메시지가 오면 화면에 업데이트)
+    useEffect(() => {
+        // 서버에서 실시간 메시지를 받아오는 코드 (WebSocket 미사용)
+        const eventSource = new EventSource("http://localhost:8090/chat");
+
+        eventSource.onmessage = function(event) {
+            const newMessage = JSON.parse(event.data);
+            setMessages((prevMessages) => [...prevMessages, newMessage]);
+        };
+
+        return () => {
+            eventSource.close();
+        };
+    }, []);
+
     useEffect(() => {
         getAllMessages(); // 페이지 로드 시
     },[]);
