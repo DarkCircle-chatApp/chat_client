@@ -18,7 +18,7 @@ function ChatPage() {
             const response = await fetch(`http://localhost:8090/chat/getAllMessages`);
             if (response.ok) {
                 const data = await response.json();
-                setMessages(data); // 서버에서 받은 메시지 목록 업데이트
+                setMessages(data); // 메시지 목록 초기화
                 scrollToBottom();
             } else {
                 console.error("Failed to fetch messages");
