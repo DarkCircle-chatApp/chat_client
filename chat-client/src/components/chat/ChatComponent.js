@@ -18,7 +18,7 @@ function ChatPage() {
             const response = await fetch(`http://localhost:8090/chat/getAllMessages`);
             if (response.ok) {
                 const data = await response.json();
-                setMessages(data); // 서버에서 받은 메시지 목록 업데이트
+                setMessages(data); // 메시지 목록 초기화
                 scrollToBottom();
             } else {
                 console.error("Failed to fetch messages");
@@ -75,24 +75,29 @@ function ChatPage() {
         scrollToBottom();
     }, [messages]);
 
-    // 실시간 메시지 수신 (서버에서 메시지가 오면 화면에 업데이트)
-    useEffect(() => {
-        // 서버에서 실시간 메시지를 받아오는 코드 (WebSocket 미사용)
-        const eventSource = new EventSource("http://localhost:8090/chat");
 
-        eventSource.onmessage = function(event) {
-            const newMessage = JSON.parse(event.data);
-            setMessages((prevMessages) => [...prevMessages, newMessage]);
+    useEffect(() => {
+        getAllMessages(); // 페이지 로드 시
+    },[]);
+
+    // SSE 구독 (실시간 메시지 받기)
+    useEffect(() => {
+        const eventSource = new EventSource("http://localhost:8090/chat/subscribe");
+
+        eventSource.onmessage = (event) => {
+            setMessages((prevMessages) => [...prevMessages, { message: event.data }]);
+            scrollToBottom();
+        };
+
+        eventSource.onerror = () => {
+            console.error("SSE 연결 오류");
+            eventSource.close();
         };
 
         return () => {
             eventSource.close();
         };
     }, []);
-
-    useEffect(() => {
-        getAllMessages(); // 페이지 로드 시
-    },[]);
 
     return (
         <div className="page-wrapper">
