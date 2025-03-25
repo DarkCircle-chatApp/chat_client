@@ -5,6 +5,7 @@ import styled from "styled-components";
 import MainComponent from './components/pages/MainComponent';
 import SignupComponent from './components/signup/SignupComponent';
 import ChatComponent from './components/chat/ChatComponent';
+import TestComponent from "./components/chat/TestComponent";
 // const MainTitleText = styled.p`
 //     font-size: 24px;
 //     font-weight: bold;
@@ -16,7 +17,8 @@ function App(props) {
     <BrowserRouter>
         {/* <MainTitleText>2025 부경대 IoT 개발자 과정 채팅방</MainTitleText> */}
         <Routes>
-                <Route path="/" element={<MainComponent />} />
+                {/* <Route path="/" element={<MainComponent />} /> */}
+                <Route path="/" element={<TestComponent />} />
                 <Route path="/signup" element={<SignupComponent />} />
                 <Route path="/chat/:userid" element={<ChatComponent />} />
         </Routes>
