@@ -20,7 +20,7 @@ function App(props) {
                 <Route path="/" element={<MainComponent />} />
                 {/* <Route path="/" element={<TestComponent />} /> */}
                 <Route path="/signup" element={<SignupComponent />} />
-                <Route path="/chat/:userid" element={<ChatComponent />} />
+                <Route path="/chat/:login_id" element={<ChatComponent />} />
         </Routes>
     </BrowserRouter>
   );

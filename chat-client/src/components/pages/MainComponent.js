@@ -94,8 +94,8 @@ const SignupText = styled.p`
 
 function LoginPage() {
     const navigate = useNavigate();
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
+    const [login_id, setLogin_id] = useState("");
+    const [login_pw, setLogin_pw] = useState("");
     const [seePassword, setSeePassword] = useState(false); // 기본값 : 비밀번호 숨김
     // const [loginCheck, setLoginCheck] = useState(false);   // 로그인 상태
 
@@ -103,16 +103,44 @@ function LoginPage() {
         setSeePassword(!seePassword);
     };
 
-    const loginHandler = () => {
-        console.log("로그인 시도:", email, password);
-        navigate("/chat/1");    // 나중에 userid부분 수정
+    // CORS 때문에 6시간 날림 ㅋㅋㅋ
+    const loginHandler = async (endpoint, port) => {
+        console.log("로그인 시도:", login_id, login_pw);
+        if (login_id.trim() && login_pw.trim()) {
+            try {
+                const response = await fetch(`http://localhost:${port}/${endpoint}`, {
+                    method: "POST",
+                    mode: "cors",
+                    headers: {
+                        "Content-Type" : "application/json",
+                    },
+                    body: JSON.stringify({
+                        login_id: login_id,
+                        login_pw: login_pw,
+                    }),
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log("login response: ", data);
+                    navigate(`/chat/${login_id}`);
+                } else {
+                    console.error("Login failed. Status:", response.status);
+                }
+            } catch (error) {
+                console.error("Error message: ", error);
+            }
+
+        }
+
+        // navigate("/chat/1");    // 나중에 userid부분 수정
     };
 
     const keyDownHandler = (e) => {
-        console.log("Key pressed:", e.key);
+        // console.log("Key pressed:", e.key);
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
-            loginHandler();
+            loginHandler("login", 8080);
         }
     };
 
@@ -124,8 +152,8 @@ function LoginPage() {
                     <InputLabel>Email</InputLabel>
                     <TextInput 
                         height={20}
-                        value={email}
-                        onChange={(event) => setEmail(event.target.value)}
+                        value={login_id}
+                        onChange={(event) => setLogin_id(event.target.value)}
                         placeholder="이메일 입력"
                     />
                     <Line />
@@ -133,9 +161,9 @@ function LoginPage() {
                     <PasswordWrapper>
                         <TextInput
                             height={20}
-                            value={password}
+                            value={login_pw}
                             type={seePassword ? "text" : "password"} // 상태에 따라 input 타입 변경
-                            onChange={(event) => setPassword(event.target.value)}
+                            onChange={(event) => setLogin_pw(event.target.value)}
                             onKeyDown={keyDownHandler}
                             placeholder="비밀번호 입력"
                         />
@@ -145,7 +173,7 @@ function LoginPage() {
                     </PasswordWrapper>
                     <Line />
                 </InputContainer>
-                <LoginButton title="로그인" onClick={loginHandler} />
+                <LoginButton title="로그인" onClick={() => loginHandler("login", 8080)} />
                 <SignupText onClick={() => navigate("/signup")}>
                     Don’t have an account? Signup Here
                 </SignupText>
