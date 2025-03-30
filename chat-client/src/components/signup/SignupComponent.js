@@ -89,6 +89,11 @@ const PasswordWrapper = styled.div`
     display: flex;
     align-items: center;
 `;
+const ErrorMessage = styled.p`
+    color: red;
+    font-size: 14px;
+    margin-top: 5px;
+`;
 
 function SignupPage() {
     const navigate = useNavigate();
@@ -104,11 +109,37 @@ function SignupPage() {
     const [user_email, setUser_email] = useState("");
     const [user_birthdate, setUser_birthdate] = useState("");
     const [seePassword, setSeePassword] = useState(false); // 기본값 : 비밀번호 숨김
-    const [loading, setLoading] = useState(false); // 로딩 상태 추가
+    const [loading, setLoading] = useState(false); // 로딩 상태
+    const [idError, setIdError] = useState(""); // 아이디 중복 에러 메시지 상태
     const domainOptions = ["naver.com", "daum.net", "gmail.com", "hanmail.net", "nate.com", "직접 입력"];
 
     const seePasswordHandler = () => {
         setSeePassword(!seePassword);
+    };
+
+     // 아이디 중복 체크
+     const checkIdExist = async (login_id, endpoint, port) => {
+        try {
+            const response = await fetch(`http://localhost:${port}/${endpoint}`, {
+                method: "POST",
+                mode: "cors",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ login_id: login_id, }),
+            });
+            
+            // const responseBody = await response.text(); // 로그 찍어보는 용. 나중에 지울 것
+            if (response.status === 400) {
+                // console.error(responseBody);
+                setIdError("이미 존재하는 아이디");
+            } else if (response.status === 200) {
+                // console.log(responseBody);
+                setIdError("");
+            }
+        } catch (error) {
+            console.error("Error checking ID: ", error);
+        }
     };
 
     const signupHandler = async (endpoint, port) => {
@@ -138,7 +169,7 @@ function SignupPage() {
                 
                 if (response.status === 400) {
                     // 아이디 중복 처리
-                    alert("아이디가 이미 존재합니다. 다른 아이디를 입력해주세요.");
+                    alert("이미 존재하는 아이디입니다. 다른 아이디를 입력해주세요.");
                     setLoading(false); // 로딩 종료
                 } else if (response.ok) {
                     setLoading(false); // 로딩 종료
@@ -201,6 +232,17 @@ function SignupPage() {
         }
     };
 
+     // 아이디 변경될 때마다 중복 체크
+     const handleLoginIdChange = (event) => {
+        const value = event.target.value;
+        setLogin_id(value);
+        if (value.trim()) {
+            checkIdExist(value, "idCheck", 8080);
+        } else {
+            setIdError(""); // 아이디가 비어있으면 오류 메시지 제거
+        }
+    };
+
     return (
         <PageWrapper>
             {loading ? <Loading /> : null}
@@ -211,9 +253,10 @@ function SignupPage() {
                     <TextInput 
                         height={20}
                         value={login_id}
-                        onChange={(event) => setLogin_id(event.target.value)}
+                        onChange={handleLoginIdChange}
                         placeholder="로그인 아이디 입력"
                     />
+                    {idError && <ErrorMessage>{idError}</ErrorMessage>}
                     <Line />
     
                     <InputLabel>Password</InputLabel>
@@ -273,13 +316,13 @@ function SignupPage() {
                         <span style={{ margin: "0 8px", fontSize: "18px" }}>@</span>
                         {!isCustom ? (
                             <select onChange={handleDomainChange} style={{ flex: 2, height: "40px", fontSize: "16px", padding: "5px" }}>
-                                <option value="">도메인 선택</option>
+                                <option value="">선택</option>
                                 {domainOptions.map((domain) => (
                                     <option key={domain} value={domain}>{domain}</option>
                                 ))}
                             </select>
                         ) : (
-                            <TextInput value={customDomain} onChange={handleCustomDomainChange} placeholder="도메인 입력" style={{ flex: 2 }} />
+                            <TextInput value={customDomain} onChange={handleCustomDomainChange} placeholder="선택" style={{ flex: 2 }} />
                         )}
                     </div>
 
