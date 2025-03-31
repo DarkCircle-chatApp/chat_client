@@ -14,6 +14,7 @@ function ChatPage() {
     const { login_id } = useParams();
     const [user_status, setUser_status] = useState("Loading...");
     const [user_name, setUser_name] = useState("");
+    const [user_id, setUser_id] = useState("");
     const [participants, setParticipants] = useState([]);
     const user = useRecoilValue(userState); // recoil 로그인 상태 데이터
     // const [token, setToken] = useState(null); // 로그인 토큰 상태
@@ -27,6 +28,61 @@ function ChatPage() {
     //         setToken(storedToken);
     //     }
     // }, []);
+
+    // 채팅밴
+    const banUserChat = async (endpoint, port, user_id) => {
+        try {
+            const response = await fetch(`http://localhost:${port}/${endpoint}`, {
+                method: "PUT",
+                mode: "cors",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
+                body: JSON.stringify({ user_id: user_id, }),
+            });
+            
+            // const responseBody = await response.text(); // 로그 찍어보는 용. 나중에 지울 것
+            if (response.status === 200) {
+                console.log("User banned successfully.");
+            } else {
+                console.error("Failed to ban user:", response.status);
+            }
+        } catch (error) {
+            console.error("ban user chat error: ", error);
+        }
+    };
+
+    // user_id 조회
+    const getUserId = async (login_id, endpoint, port, token) => {
+        try {
+            const response = await fetch(`http://localhost:${port}/${endpoint}/${login_id}`, {
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization" : `Bearer ${token}`,
+                },
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (data.user_id) {
+                    // setUser_id(data.user_id); // user_id 저장
+                    console.log("Fetched user_id:", data.user_id);
+                    return data.user_id;
+                } else {
+                    console.error("User not found in response");
+                    return null;
+                }
+            } else {
+                console.error("Failed to fetch user_id:", response.status);
+                return null;
+
+            }
+        } catch (error) {
+            console.error("Error fetching user_id:", error);
+            return null;
+
+        }
+    };
     
     // user_name 조회
     const getUserName = async (login_id, endpoint, port, token) => {
@@ -65,7 +121,7 @@ function ChatPage() {
         } catch (error) {
             console.error("Error fetching user_status: ", error);
         }
-    }
+    };
 
     // user_status값 조회
     const getUserStatus = async (login_id, endpoint, port, token) => {
@@ -202,9 +258,19 @@ function ChatPage() {
     // }, []);
 
     // 채팅밴 버튼 핸들러
-    const banUserHandler = (participant_id) => {
-        console.log(`User with id ${participant_id} banned by admin`);
-        // 아래에 채팅밴 기능 api 연동
+    const banUserHandler = async (login_id) => {
+        console.log(`User with id ${login_id} banned by admin`);
+        
+        const user_id = await getUserId(login_id, "showId", 8080, token);
+
+        console.log("Banning user with id:", user_id);
+    
+        if (user_id) {
+            console.log("Banning user with id:", user_id);
+            await banUserChat("chat/admin/ban", 8080, user_id);
+        } else {
+            console.error("ban failed");
+        }
     };
 
     useEffect(() => {
@@ -283,8 +349,8 @@ function ChatPage() {
                             {/* 관리자일 때만 채팅밴 버튼 활성화 */}
                             {user_status === 0 && (
                                 <BanButton title="채팅밴" onClick={() =>{ 
-                                    console.log("Banning user with id:", participant.id);
-                                    banUserHandler(participant.id)} }
+                                    console.log("Banning user with id:", login_id);
+                                    banUserHandler(login_id)} }
                                 />
                             )}
                         </div>
