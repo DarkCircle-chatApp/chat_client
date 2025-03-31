@@ -5,6 +5,8 @@ import styled from "styled-components";
 import MainComponent from './components/pages/MainComponent';
 import SignupComponent from './components/signup/SignupComponent';
 import ChatComponent from './components/chat/ChatComponent';
+// import AdminComponent from './components/admin/AdminComponent';
+import { RecoilRoot } from "recoil";
 // import TestComponent from "./components/chat/TestComponent";
 // const MainTitleText = styled.p`
 //     font-size: 24px;
@@ -14,15 +16,18 @@ import ChatComponent from './components/chat/ChatComponent';
 
 function App(props) {
   return (
-    <BrowserRouter>
-        {/* <MainTitleText>2025 부경대 IoT 개발자 과정 채팅방</MainTitleText> */}
-        <Routes>
-                <Route path="/" element={<MainComponent />} />
-                {/* <Route path="/" element={<TestComponent />} /> */}
-                <Route path="/signup" element={<SignupComponent />} />
-                <Route path="/chat/:login_id" element={<ChatComponent />} />
-        </Routes>
-    </BrowserRouter>
+    <RecoilRoot>
+      <BrowserRouter>
+          {/* <MainTitleText>2025 부경대 IoT 개발자 과정 채팅방</MainTitleText> */}
+          <Routes>
+                  <Route path="/" element={<MainComponent />} />
+                  {/* <Route path="/" element={<TestComponent />} /> */}
+                  <Route path="/signup" element={<SignupComponent />} />
+                  <Route path="/chat/:login_id" element={<ChatComponent />} />
+                  {/* <Route path="/admin" element={<AdminComponent />} /> */}
+          </Routes>
+      </BrowserRouter>
+    </RecoilRoot>
   );
 }
 

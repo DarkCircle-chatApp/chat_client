@@ -4,6 +4,8 @@ import styled from "styled-components";
 import { FaEye, FaEyeSlash } from "react-icons/fa"; // 눈 모양 아이콘 추가
 import Button from "../ui/ButtonComponent";
 import TextInput from "../ui/TextInputComponent";
+import { useRecoilState, useSetRecoilState } from "recoil";
+import { userState } from "../state/UserState"; // 로그인 상태
 
 const PageWrapper = styled.div`
     position: relative;
@@ -94,10 +96,12 @@ const SignupText = styled.p`
 
 function LoginPage() {
     const navigate = useNavigate();
+    const [user_id, setUser_id] = useState("");
     const [login_id, setLogin_id] = useState("");
     const [login_pw, setLogin_pw] = useState("");
     const [seePassword, setSeePassword] = useState(false); // 기본값 : 비밀번호 숨김
-    // const [loginCheck, setLoginCheck] = useState(false);   // 로그인 상태
+    // const [user, setUser] = useRecoilState(userState);   // 로그인 상태
+    const setUser = useSetRecoilState(userState);
 
     const seePasswordHandler = () => {
         setSeePassword(!seePassword);
@@ -123,6 +127,14 @@ function LoginPage() {
                 if (response.ok) {
                     const data = await response.json();
                     console.log("login response: ", data);
+                    localStorage.setItem("token", data.token);
+                    // recoil 상태에 사용자 정보 설정
+                    setUser({
+                        token: data.token,
+                        // login_id: data.login_id,  // 서버에서 반환한 login_id 설정
+                        user_status: data.user_status, // 서버에서 반환한 user_status로 설정
+                    });
+                    // setUser(data);  // 로그인 성공 -> recoil 상태 업데이트
                     navigate(`/chat/${login_id}`);
                 } else {
                     console.error("Login failed. Status:", response.status);
