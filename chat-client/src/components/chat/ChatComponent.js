@@ -3,7 +3,7 @@ import TextInput from "../ui/TextInputComponent";
 import Button from "../ui/ButtonComponent";
 import BanButton from "../ui/BanButtonComponent";
 import { useNavigate, useParams } from "react-router-dom";
-import { useRecoilValue } from "recoil";
+import { useRecoilValue, useSetRecoilState } from "recoil";
 import { userState } from "../state/UserState";
 import "./ChatPage.css";
 
@@ -20,6 +20,8 @@ function ChatPage() {
     // const [token, setToken] = useState(null); // 로그인 토큰 상태
     const {token, login_id:recoilLoginId} = useRecoilValue(userState);
     const [bannedUsers, setBannedUsers] = useState(new Set());
+    const setLoginId = useSetRecoilState(userState);
+    
     const navigate = useNavigate();
     const messagesEndRef = useRef(null);
 
@@ -29,6 +31,15 @@ function ChatPage() {
     //         setToken(storedToken);
     //     }
     // }, []);
+
+    useEffect(() => {
+            // 페이지 로드 시 로컬 스토리지에서 login_id 가져오기
+            const storedLoginId = localStorage.getItem('login_id');
+            if (storedLoginId && !login_id) {
+                // 로그인 정보가 로컬 스토리지에 있을 경우 Recoil 상태에 설정
+                setLoginId({ login_id: storedLoginId });
+            }
+    }, [login_id, setLoginId]);
 
     // 채팅밴
     const banUserChat = async (endpoint, port, user_id) => {
