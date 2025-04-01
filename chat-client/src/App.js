@@ -6,6 +6,8 @@ import MainComponent from './components/pages/MainComponent';
 import SignupComponent from './components/signup/SignupComponent';
 import ChatComponent from './components/chat/ChatComponent';
 import AdminComponent from './components/admin/AdminComponent';
+import MypageComponent from './components/mypage/MypageComponent';
+import GatewayComponent from './components/pages/GatewayComponent';
 import { RecoilRoot } from "recoil";
 // import TestComponent from "./components/chat/TestComponent";
 // const MainTitleText = styled.p`
@@ -25,6 +27,8 @@ function App(props) {
                   <Route path="/signup" element={<SignupComponent />} />
                   <Route path="/chat/:login_id" element={<ChatComponent />} />
                   <Route path="/admin" element={<AdminComponent />} />
+                  <Route path="/mypage" element={<MypageComponent />} />
+                  <Route path="/gateway" element={<GatewayComponent />} />
           </Routes>
       </BrowserRouter>
     </RecoilRoot>

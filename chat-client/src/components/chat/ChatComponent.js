@@ -19,6 +19,7 @@ function ChatPage() {
     const user = useRecoilValue(userState); // recoil 로그인 상태 데이터
     // const [token, setToken] = useState(null); // 로그인 토큰 상태
     const {token, login_id:recoilLoginId} = useRecoilValue(userState);
+    const [bannedUsers, setBannedUsers] = useState(new Set());
     const navigate = useNavigate();
     const messagesEndRef = useRef(null);
 
@@ -45,11 +46,37 @@ function ChatPage() {
             // const responseBody = await response.text(); // 로그 찍어보는 용. 나중에 지울 것
             if (response.status === 200) {
                 console.log("User banned successfully.");
+                
             } else {
                 console.error("Failed to ban user:", response.status);
             }
         } catch (error) {
             console.error("ban user chat error: ", error);
+        }
+    };
+
+    // 채팅밴 해제
+    const unbanUserChat = async (endpoint, port, user_id) => {
+        try {
+            const response = await fetch(`http://localhost:${port}/${endpoint}`, {
+                method: "PUT",
+                mode: "cors",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
+                body: JSON.stringify({ user_id: user_id, }),
+            });
+            
+            // const responseBody = await response.text(); // 로그 찍어보는 용. 나중에 지울 것
+            if (response.status === 200) {
+                console.log("User unbanned successfully.");
+                
+            } else {
+                console.error("Failed to unban user:", response.status);
+            }
+        } catch (error) {
+            console.error("unban user chat error: ", error);
         }
     };
 
@@ -70,16 +97,16 @@ function ChatPage() {
                     return data.user_id;
                 } else {
                     console.error("User not found in response");
-                    return null;
+                    // return null;
                 }
             } else {
                 console.error("Failed to fetch user_id:", response.status);
-                return null;
+                // return null;
 
             }
         } catch (error) {
             console.error("Error fetching user_id:", error);
-            return null;
+            // return null;
 
         }
     };
@@ -263,11 +290,35 @@ function ChatPage() {
         
         const user_id = await getUserId(login_id, "showId", 8080, token);
 
-        console.log("Banning user with id:", user_id);
+        // console.log("Banning user with id:", user_id);
     
         if (user_id) {
             console.log("Banning user with id:", user_id);
-            await banUserChat("chat/admin/ban", 8080, user_id);
+            const response = await banUserChat("chat/admin/ban", 8080, user_id);
+
+            if (response?.status === 200) {
+                setBannedUsers((prev) => new Set([...prev, login_id])); // 밴된 유저 추가
+            }
+        } else {
+            console.error("ban failed");
+        }
+    };
+
+     // 채팅밴 해제 버튼 핸들러
+     const unbanUserHandler = async (login_id) => {
+        console.log(`User with id ${login_id} unbanned by admin`);
+        
+        const user_id = await getUserId(login_id, "showId", 8080, token);
+
+        // console.log("Banning user with id:", user_id);
+    
+        if (user_id) {
+            console.log("Unbanning user with id:", user_id);
+            const response = await unbanUserChat("chat/admin/unban", 8080, user_id);
+
+            // if (response?.status === 200) {
+            //     setBannedUsers((prev) => new Set([...prev, login_id])); // 밴된 유저 추가
+            // }
         } else {
             console.error("ban failed");
         }
@@ -280,7 +331,7 @@ function ChatPage() {
         }
     }, [token, login_id]);
 
-    // user_name을 participants에 추가하는 부분
+    // user_name을 participants에 추가
     useEffect(() => {
         if (user_name) {
             setParticipants((prevParticipants) => [
@@ -345,13 +396,23 @@ function ChatPage() {
                     <h3 className="participants-title">참여자 목록</h3>
                     {participants.map((participant) => (
                         <div key={participant.name} className="participant">
-                            {participant.name}
+                            <div className="participant-name">
+                                {participant.name}
+                            </div>
                             {/* 관리자일 때만 채팅밴 버튼 활성화 */}
                             {user_status === 0 && (
-                                <BanButton title="채팅밴" onClick={() =>{ 
-                                    console.log("Banning user with id:", login_id);
-                                    banUserHandler(login_id)} }
-                                />
+                                <div className="ban-buttons">
+                                    <BanButton
+                                        title="채팅밴"
+                                        className={bannedUsers.has(participant.id) ? "ban-button red" : "ban-button"}
+                                        onClick={() => banUserHandler(participant.id)}
+                                    />
+                                    <BanButton
+                                        title="해제"
+                                        className="unban-button"
+                                        onClick={() => unbanUserHandler(participant.id)}
+                                    />
+                                </div>
                             )}
                         </div>
                     ))}

@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { FaBan } from "react-icons/fa"; // 차단 아이콘
+import { FaUndo } from "react-icons/fa"; // 되돌리기 아이콘
+import { useRecoilValue } from "recoil";
+import { userState } from "../state/UserState";
 
 // 스타일링
 const PageWrapper = styled.div`
@@ -14,7 +17,7 @@ const PageWrapper = styled.div`
 `;
 
 const AdminContainer = styled.div`
-    width: 600px;
+    width: 800px;
     height: 80vh;
     background: #FFFFFF;
     border-radius: 20px;
@@ -42,8 +45,16 @@ const UserItem = styled.li`
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px;
+    padding: 8px;
     border-bottom: 1px solid #ddd;
+    width: 100%;
+    // padding: 0 5px;
+
+    span {
+        text-align: left;
+        flex: 1;
+        // min-width: 10px;
+    }
 `;
 
 const BanButton = styled.button`
@@ -57,54 +68,137 @@ const BanButton = styled.button`
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 15px;
+    margin-right: 10px;
     
     &:hover {
         background-color: #D43F3F;
     }
 `;
 
+const UserHeader = styled.li`
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    font-weight: bold;
+    background-color: #f4f4f4;
+    border-bottom: 2px solid #ddd;
+
+    span {
+        text-align: left;
+        flex: 1;
+        // min-width: 10px;
+        padding: 0 5px;
+    }
+`;
+
 function AdminComponent() {
     const [users, setUsers] = useState([]);
+    const {token, login_id:recoilLoginId} = useRecoilValue(userState);
+    // const [user_id, setUser_id] = useState([]);
+    // const [user_name, setUser_name] = useState([]);
+    // const [login_id, setLogin_id] = useState([]);
+    // const [user_status, setUser_status] = useState([]);
     
-    // 유저 목록 가져오기
-    useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const response = await fetch("http://localhost:8080/admin/users");
-                if (response.ok) {
-                    const data = await response.json();
-                    setUsers(data.users); // 유저 데이터 설정
-                } else {
-                    console.error("Failed to fetch users:", response.status);
-                }
-            } catch (error) {
-                console.error("Error fetching users:", error);
+    // 유저 목록 조회
+    const fetchUsers = async () => {
+        try {
+            const response = await fetch(`http://localhost:8080/chat/admin/admin_select`);
+            if (response.ok) {
+                const data = await response.json();
+                const usersData = data.map(user => ({
+                    user_id: user.user_id,
+                    user_name: user.user_name,
+                    login_id: user.login_id,
+                    user_status: user.user_status,
+                }));
+                setUsers(usersData);
+            } else {
+                console.error("Failed to fetch users:", response.status);
             }
-        };
-        
+        } catch (error) {
+            console.error("Error fetching users:", error);
+        }
+    };
+
+    useEffect(() => {
         fetchUsers();
     }, []);
-    
-    // 유저 차단 처리
+        
+    // 유저 차단
     const handleBanUser = async (user_id) => {
         try {
-            const response = await fetch(`http://localhost:8080/admin/ban/${user_id}`, {
-                method: "POST",
+            const response = await fetch(`http://localhost:8080/chat/admin/user_delete`, {
+                method: "PUT",
+                mode: "cors",
                 headers: {
                     "Content-Type": "application/json",
                 },
+                body: JSON.stringify({ user_id: user_id, }),
             });
 
             if (response.ok) {
-                alert("User has been banned!");
-                // 차단된 유저는 목록에서 제거
-                setUsers(users.filter(user => user.id !== user_id));
+                fetchUsers();
+                alert("User has been banned.");
             } else {
-                alert("Failed to ban user!");
+                alert("Failed to ban user");
             }
         } catch (error) {
             console.error("Error banning user:", error);
+        }
+    };
+
+    const handleUnbanUser = async (user_id) => {
+        try {
+            const response = await fetch(`http://localhost:8080/chat/admin/unban`, {
+                method: "PUT",
+                mode: "cors",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ user_id: user_id, }),
+            });
+
+            if (response.ok) {
+                fetchUsers();
+                alert("차단이 해제되었습니다.");
+            } else {
+                alert("Failed");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    };
+
+    const handleAdminStat = async (user_id) => {
+        try {
+            const response = await fetch(`http://localhost:8080/chat/admin/status_update`, {
+                method: "PUT",
+                mode: "cors",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ user_id: user_id, }),
+            });
+
+            if (response.ok) {
+                fetchUsers();
+                alert("관리자 설정 완료");
+            } else {
+                alert("Failed");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    };
+
+    const getStatusText = (status) => {
+        switch (status) {
+            case 0: return "관리자";
+            case 1: return "일반 사용자";
+            case 2: return "차단된 사용자";
+            case 3: return "채팅 차단됨";
+            default: return "알 수 없음";
         }
     };
 
@@ -113,11 +207,25 @@ function AdminComponent() {
             <AdminContainer>
                 <Title>Admin Dashboard</Title>
                 <UserList>
+                    <UserHeader>
+                        <span>Name</span>
+                        <span>ID</span>
+                        <span>Status</span>
+                        <span>Controller</span>
+                    </UserHeader>
                     {users.map(user => (
-                        <UserItem key={user.id}>
-                            <span>{user.name}</span>
-                            <BanButton onClick={() => handleBanUser(user.id)}>
+                        <UserItem key={user.user_id}>
+                            <span>{user.user_name}</span>
+                            <span>{user.login_id}</span>
+                            <span>{getStatusText(user.user_status)}</span>
+                            <BanButton onClick={() => handleBanUser(user.user_id)}>
                                 <FaBan /> Ban
+                            </BanButton>
+                            <BanButton onClick={() => handleUnbanUser(user.user_id)}>
+                                <FaUndo /> Unban
+                            </BanButton>
+                            <BanButton title="관리자 설정" onClick={() => {handleAdminStat(user.user_id)}} >
+                                관리자 설정
                             </BanButton>
                         </UserItem>
                     ))}
