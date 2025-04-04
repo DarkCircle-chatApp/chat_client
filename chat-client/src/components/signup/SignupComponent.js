@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import DaumPostcode from "react-daum-postcode";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import Button from "../ui/ButtonComponent";
 import TextInput from "../ui/TextInputComponent";
@@ -69,6 +72,47 @@ const SignupButton = styled(Button)`
     margin-top: 10px;
 `;
 
+const AddressWrapper = styled.div`
+    display: flex;
+    align-items: center;
+    width: 100%;
+`;
+
+const AddressButton = styled.button`
+    background: #5B86E5;
+    color: white;
+    border: none;
+    padding: 12px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 10px;
+    text-align: center;
+    white-space: nowrap;
+`;
+
+const ModalWrapper = styled.div`
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+`;
+
+const ModalContent = styled.div`
+    background: white;
+    padding: 10px;
+    border-radius: 10px;
+    z-index: 10000;
+    font-size: 20px;
+    font-family: 'Telegraf', sans-serif;
+    overflow: auto;
+`;
+
 const LoginText = styled.p`
     font-family: 'Telegraf', sans-serif;
     font-size: 16px;
@@ -94,6 +138,23 @@ const ErrorMessage = styled.p`
     font-size: 14px;
     margin-top: 5px;
 `;
+const BirthdateWrapper = styled.div`
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+`;
+const BirthdateButton = styled.button`
+    background: #5B86E5;
+    color: white;
+    border: none;
+    padding: 12px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 10px;
+    text-align: center;
+    white-space: nowrap;
+`;
 
 function SignupPage() {
     const navigate = useNavigate();
@@ -107,20 +168,55 @@ function SignupPage() {
     const [customDomain, setCustomDomain] = useState(""); // 도메인 직접 입력
     const [isCustom, setIsCustom] = useState(false); // 직접 입력 여부
     const [user_email, setUser_email] = useState("");
-    const [user_birthdate, setUser_birthdate] = useState("");
+    const [user_birthdate, setUser_birthdate] = useState(null);
     const [seePassword, setSeePassword] = useState(false); // 기본값 : 비밀번호 숨김
     const [loading, setLoading] = useState(false); // 로딩 상태
     const [idError, setIdError] = useState(""); // 아이디 중복 에러 메시지 상태
+    const [addressModalOpen, setAddressModalOpen] = useState(false); // 주소 모달 상태
+    const [birthdateModalOpen, setBirthdateModalOpen] = useState(false); // 생일 모달 상태
+    const [passwordCheck, setPasswordCheck] = useState("");
+    const [passwordError, setPasswordError] = useState("");
     const domainOptions = ["naver.com", "daum.net", "gmail.com", "hanmail.net", "nate.com", "직접 입력"];
+
+    const MYIP = "210.119.12.54";
 
     const seePasswordHandler = () => {
         setSeePassword(!seePassword);
     };
 
+    const handlePasswordChange = (event) => {
+        setLogin_pw(event.target.value);
+    };
+    
+    const handlePasswordCheckChange = (event) => {
+        const value = event.target.value;
+        setPasswordCheck(value);
+    
+        if (login_pw !== value) {
+            setPasswordError("비밀번호가 일치하지 않습니다.");
+        } else {
+            setPasswordError("");
+        }
+    };
+
+    const handleComplete = (data) => {
+        let fullAddress = data.roadAddress;
+        if (data.jibunAddress) {
+            fullAddress += ` (${data.jibunAddress})`;
+        }
+        setUser_addr(fullAddress);
+        setAddressModalOpen(false);
+    };
+
+    const handleBirthdateChange = (date) => {
+        setUser_birthdate(date);
+        setBirthdateModalOpen(false);
+    };
+
      // 아이디 중복 체크
      const checkIdExist = async (login_id, endpoint, port) => {
         try {
-            const response = await fetch(`http://localhost:${port}/${endpoint}`, {
+            const response = await fetch(`http://${MYIP}:${port}/${endpoint}`, {
                 method: "POST",
                 mode: "cors",
                 headers: {
@@ -145,12 +241,13 @@ function SignupPage() {
     const signupHandler = async (endpoint, port) => {
         console.log("회원가입 시도:", login_id, login_pw, user_name, 
                                       user_addr, user_phone, user_email, user_birthdate);
-        if (login_id.trim() && login_pw.trim() && user_name.trim() && user_addr.trim() && user_phone.trim() && user_email.trim() && user_birthdate.trim()) {
+        if (login_id.trim() && login_pw.trim() && user_name.trim() && user_addr.trim() && user_phone.trim() && user_email.trim() && user_birthdate) {
             try {
                 setLoading(true); // 로딩 시작
-                const [year, month, day] = user_birthdate.split('-').map(Number);
+                // const [year, month, day] = user_birthdate.split('-').map(Number);
+                const [year, month, day] = [user_birthdate.getFullYear(), user_birthdate.getMonth() + 1, user_birthdate.getDate()];
 
-                const response = await fetch(`http://localhost:${port}/${endpoint}`, {
+                const response = await fetch(`http://${MYIP}:${port}/${endpoint}`, {
                     method: "POST",
                     mode: "cors",
                     headers: {
@@ -216,6 +313,12 @@ function SignupPage() {
         setUser_email(`${emailUser}@${newCustomDomain}`);
     };
 
+    useEffect(() => {
+        if (login_id) {
+            checkIdExist(login_id, "idCheck", 8080);
+        }
+    }, [login_id]);
+
     const handleBirthdateInput = (event) => {
         let value = event.target.value.replace(/[^0-9]/g, ""); // 숫자만 입력 받기
     
@@ -232,16 +335,16 @@ function SignupPage() {
         }
     };
 
-     // 아이디 변경될 때마다 중복 체크
-     const handleLoginIdChange = (event) => {
-        const value = event.target.value;
-        setLogin_id(value);
-        if (value.trim()) {
-            checkIdExist(value, "idCheck", 8080);
-        } else {
-            setIdError(""); // 아이디가 비어있으면 오류 메시지 제거
-        }
-    };
+    //  // 아이디 변경될 때마다 중복 체크
+    //  const handleLoginIdChange = (event) => {
+    //     const value = event.target.value;
+    //     setLogin_id(value);
+    //     if (value.trim()) {
+    //         checkIdExist(value, "idCheck", 8080);
+    //     } else {
+    //         setIdError(""); // 아이디가 비어있으면 오류 메시지 제거
+    //     }
+    // };
 
     return (
         <PageWrapper>
@@ -253,7 +356,7 @@ function SignupPage() {
                     <TextInput 
                         height={20}
                         value={login_id}
-                        onChange={handleLoginIdChange}
+                        onChange={(e) => setLogin_id(e.target.value)}
                         placeholder="로그인 아이디 입력"
                     />
                     {idError && <ErrorMessage>{idError}</ErrorMessage>}
@@ -273,23 +376,50 @@ function SignupPage() {
                         </EyeIcon>
                     </PasswordWrapper>
                     <Line />
+
+                    <InputLabel>Password Check</InputLabel>
+                    <PasswordWrapper>
+                        <TextInput
+                            height={20}
+                            value={passwordCheck}
+                            onChange={handlePasswordCheckChange}
+                            placeholder="비밀번호 확인"
+                            type={seePassword ? "text" : "password"}
+                        />
+                        <EyeIcon onClick={seePasswordHandler}>
+                            {seePassword ? <FaEye /> : <FaEyeSlash />}
+                        </EyeIcon>
+                    </PasswordWrapper>
+                    {passwordError && <ErrorMessage>{passwordError}</ErrorMessage>}
+                    <Line />
     
                     <InputLabel>Full Name</InputLabel>
-                    <TextInput 
+                    <TextInput
                         height={20}
                         value={user_name}
                         onChange={(event) => setUser_name(event.target.value)}
                         placeholder="이름 입력"
                     />
                     <Line />
-    
+
                     <InputLabel>Address</InputLabel>
-                    <TextInput 
-                        height={20}
-                        value={user_addr}
-                        onChange={(event) => setUser_addr(event.target.value)}
-                        placeholder="주소 입력"
-                    />
+                    <AddressWrapper>
+                        <TextInput 
+                            height={20}
+                            value={user_addr}
+                            readOnly
+                            placeholder="주소 검색을 클릭하세요"
+                            style={{ flex: 1 }}
+                        />
+                        <AddressButton onClick={() => setAddressModalOpen(true)}>주소 검색</AddressButton>
+                    </AddressWrapper>
+                    {addressModalOpen && (
+                        <ModalWrapper onClick={() => setAddressModalOpen(false)}>
+                            <ModalContent onClick={(e) => e.stopPropagation()}>
+                                <DaumPostcode onComplete={handleComplete} autoClose={false} />
+                            </ModalContent>
+                        </ModalWrapper>
+                    )}
                     <Line />
     
                     <InputLabel>Phone Number</InputLabel>
@@ -329,14 +459,33 @@ function SignupPage() {
                     <Line />
     
                     <InputLabel>Birthdate</InputLabel>
-                    <TextInput 
-                        height={20}
-                        value={user_birthdate}
-                        onChange={handleBirthdateInput}
-                        placeholder="YYYY-MM-DD"
-                        maxLength={10} // 10자까지만 입력 가능 (YYYY-MM-DD)
-                        type="text"
-                    />
+                    <BirthdateWrapper>
+                        <TextInput
+                            height={20}
+                            value={user_birthdate ? user_birthdate.toLocaleDateString() : ""}
+                            readOnly
+                            placeholder="생일을 선택하세요"
+                            style={{ flex: 1 }}
+                        />
+                        <BirthdateButton onClick={() => setBirthdateModalOpen(true)}>달력 열기</BirthdateButton>
+                    </BirthdateWrapper>
+                    {birthdateModalOpen && (
+                        <ModalWrapper onClick={() => setBirthdateModalOpen(false)}>
+                            <ModalContent onClick={(e) => e.stopPropagation()}>
+                                <DatePicker
+                                    selected={user_birthdate}
+                                    onChange={handleBirthdateChange} // 날짜 변경 시 호출
+                                    dateFormat="yyyy-MM-dd" // 날짜 포맷 설정
+                                    placeholderText="생년월일을 선택하세요"
+                                    showYearDropdown
+                                    yearDropdownItemNumber={90}
+                                    scrollableYearDropdown
+                                    maxDate={new Date()} // 오늘 이전 날짜만 선택 가능
+                                    isClearable
+                                />
+                            </ModalContent>
+                        </ModalWrapper>
+                    )}
                     <Line />
                 </InputContainer>
     

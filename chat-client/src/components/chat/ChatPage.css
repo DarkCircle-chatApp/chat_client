@@ -71,6 +71,19 @@
   white-space: pre-line;
 }
 
+.other-message {
+  padding: 8px;
+  margin: 8px 0;
+  border-radius: 8px;
+  align-self: flex-start;
+  background-color: rgb(197, 196, 228); /* 상대방 메시지 색 */
+  max-width: 80%;
+  word-wrap: break-word;
+  font-size: 20px;
+  font-family: 'Nanum Gothic', sans-serif;
+  white-space: pre-line;
+}
+
 /* 메시지 입력 영역 */
 .message-input-container {
   width: 90%;

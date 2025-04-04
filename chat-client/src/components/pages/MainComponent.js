@@ -101,11 +101,12 @@ function LoginPage() {
     const [user_id, setUser_id] = useState("");
     const [login_id, setLogin_id] = useState("");
     const [login_pw, setLogin_pw] = useState("");
+    const [user_name, setUser_name] = useState("");
     const [seePassword, setSeePassword] = useState(false); // 기본값 : 비밀번호 숨김
     // const [user, setUser] = useRecoilState(userState);   // 로그인 상태
     const setUser = useSetRecoilState(userState);
     const [loading, setLoading] = useState(false); // 로딩 상태
-    
+    const MYIP = "210.119.12.54";
 
     const seePasswordHandler = () => {
         setSeePassword(!seePassword);
@@ -117,7 +118,7 @@ function LoginPage() {
         if (login_id.trim() && login_pw.trim()) {
             try {
                 setLoading(true); // 로딩 시작
-                const response = await fetch(`http://localhost:${port}/${endpoint}`, {
+                const response = await fetch(`http://${MYIP}:${port}/${endpoint}`, {
                     method: "POST",
                     mode: "cors",
                     headers: {
@@ -126,6 +127,8 @@ function LoginPage() {
                     body: JSON.stringify({
                         login_id: login_id,
                         login_pw: login_pw,
+                        user_id: user_id,
+                        user_name: user_name,
                     }),
                 });
 
@@ -133,6 +136,8 @@ function LoginPage() {
                     const data = await response.json();
                     console.log("login response: ", data);
                     localStorage.setItem("token", data.token);
+                    localStorage.setItem("user_id", data.user_id);
+                    localStorage.setItem("user_name", data.user_name);
                     // recoil 상태에 사용자 정보 설정
                     setUser({
                         token: data.token,
@@ -144,10 +149,12 @@ function LoginPage() {
                     navigate(`/gateway`);
                 } else {
                     console.error("Login failed. Status:", response.status);
+                    alert("아이디 또는 비밀번호가 일치하지 않습니다.");
                     setLoading(false); // 로딩 종료
                 }
             } catch (error) {
                 console.error("Error message: ", error);
+                alert("아이디 또는 비밀번호가 일치하지 않습니다.");
                 setLoading(false); // 로딩 종료
             }
 
@@ -175,7 +182,7 @@ function LoginPage() {
                         height={20}
                         value={login_id}
                         onChange={(event) => setLogin_id(event.target.value)}
-                        placeholder="이메일 입력"
+                        placeholder="아이디 입력"
                     />
                     <Line />
                     <InputLabel>Password</InputLabel>

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useRecoilValue, useSetRecoilState  } from "recoil";
 import { userState } from "../state/UserState";  // 로그인 정보 가져오기
+import Loading from "../load/Loading";
 
 // 스타일링
 const PageWrapper = styled.div`
@@ -101,6 +103,14 @@ const PasswordButton = styled.button`
     }
 `;
 
+const EyeIcon = styled.div`
+    position: absolute;
+    right: 10px;
+    cursor: pointer;
+    color: #9D9D9D;
+    font-size: 20px;
+`;
+
 function MyPage() {
     const [user, setUser] = useState(null);
     const [currentPassword, setCurrentPassword] = useState("");
@@ -108,7 +118,29 @@ function MyPage() {
     const [confirmPassword, setConfirmPassword] = useState("");
     const { token } = useRecoilValue(userState); // 로그인된 정보 가져오기
     const { login_id } = useRecoilValue(userState);
+    const [seePassword, setSeePassword] = useState(false); // 기본값 : 비밀번호 숨김
+    const [passwordCheck, setPasswordCheck] = useState("");
+    const [passwordError, setPasswordError] = useState("");
+    const [loading, setLoading] = useState(false); // 로딩 상태
+    
+    const MYIP = "210.119.12.54";
+
     const setLoginId = useSetRecoilState(userState);
+
+    const seePasswordHandler = () => {
+        setSeePassword(!seePassword);
+    };
+
+    const handlePasswordCheckChange = (event) => {
+        const value = event.target.value;
+        setPasswordCheck(value);
+    
+        if (confirmPassword !== value) {
+            setPasswordError("비밀번호가 일치하지 않습니다.");
+        } else {
+            setPasswordError("");
+        }
+    };
 
     useEffect(() => {
         // 로컬 스토리지에서 login_id가 없으면 로그인 정보가 비어있을 때 가져오기
@@ -128,7 +160,8 @@ function MyPage() {
     useEffect(() => {
         const fetchUserInfo = async (login_id) => {
             try {
-                const response = await fetch(`http://localhost:8080/chat/admin/user_select`, {
+                setLoading(true);
+                const response = await fetch(`http://${MYIP}:8080/chat/admin/user_select`, {
                     method: "POST",
                     headers: {
                         "Authorization": `Bearer ${token}`,
@@ -138,11 +171,14 @@ function MyPage() {
                 });
                 if (response.ok) {
                     const data = await response.json();
+                    setLoading(false);
                     setUser(data[0]); // 배열에서 첫 번째 데이터만 사용
                 } else {
+                    setLoading(false);
                     console.error("Failed to fetch user information");
                 }
             } catch (error) {
+                setLoading(false);
                 console.error("Error fetching user information:", error);
             }
         };
@@ -163,7 +199,7 @@ function MyPage() {
         }
 
         try {
-            const response = await fetch("http://localhost:8080/chat/admin/change_password", {
+            const response = await fetch(`http://${MYIP}:8080/chat/admin/change_password`, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${token}`,
@@ -190,10 +226,9 @@ function MyPage() {
         }
     };
 
-    if (!user) return <div>Loading...</div>;
-
     return (
         <PageWrapper>
+            {loading ? <Loading /> : null}
             <ProfileContainer>
                 <Title>My Page</Title>
                 <InfoWrapper>
@@ -223,7 +258,7 @@ function MyPage() {
                     </InfoItem>
                 </InfoWrapper>
 
-                <EditButton onClick={handleEdit}>Edit Profile</EditButton>
+                {/* <EditButton onClick={handleEdit}>Edit Profile</EditButton> */}
 
                 {/* 비밀번호 변경 섹션 */}
                 <PasswordSection>
@@ -241,17 +276,19 @@ function MyPage() {
                         onChange={(e) => setNewPassword(e.target.value)}
                         placeholder="새 비밀번호"
                     />
+                    <EyeIcon onClick={seePasswordHandler}>
+                        {seePassword ? <FaEye /> : <FaEyeSlash />}
+                    </EyeIcon>
                     <PasswordLabel>Confirm New Password</PasswordLabel>
                     <PasswordInput
                         type="password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        value={passwordCheck}
+                        onChange={handlePasswordCheckChange}
                         placeholder="새 비밀번호 확인"
+                        // type={seePassword ? "text" : "password"}
                     />
-                    <PasswordButton onClick={handlePasswordChange}>
-                        Change Password
-                    </PasswordButton>
                 </PasswordSection>
+                    <EditButton onClick={handleEdit}>비밀번호 변경</EditButton>
             </ProfileContainer>
         </PageWrapper>
     );

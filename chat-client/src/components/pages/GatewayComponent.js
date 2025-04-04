@@ -50,10 +50,30 @@ const Button = styled.button`
     }
 `;
 
+const LogoutButton = styled.button`
+    background-color: #e53935;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 15px 30px;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 10px 0;
+    width: 100%;
+    margin-top: 220px;
+
+    &:hover {
+        background-color:rgb(233, 79, 77);
+    }
+`;
+
 function Navigation() {
     const navigate = useNavigate();
     const { login_id } = useRecoilValue(userState); // 로그인된 userState에서 login_id 가져오기
     const setLoginId = useSetRecoilState(userState);
+    const setUser = useSetRecoilState(userState);
+
+    const MYIP = "210.119.12.54";
 
     console.log("++++++Current login_id:", login_id);
 
@@ -74,14 +94,23 @@ function Navigation() {
         navigate(path);
     };
 
+    const logoutHandler = () => {
+        console.log("Logging out...");
+        localStorage.removeItem("token");    // 토큰 삭제
+        localStorage.removeItem("user_id");  // 유저 ID 삭제
+        setUser("");                        // Recoil 상태 초기화
+        navigate("/");                   // 로그인 페이지로 이동
+    };
+
     return (
         <PageWrapper>
             <NavigationContainer>
-                <Title>Navigate</Title>
+                <Title>페이지 목록</Title>
                 {/* 로그인 ID를 동적으로 포함시켜서 '/chat/:login_id'로 네비게이션 */}
-                <Button onClick={() => handleNavigate(`/chat/${login_id}`)}>Go to Chat</Button>
-                <Button onClick={() => handleNavigate('/mypage')}>Go to My Page</Button>
-                <Button onClick={() => handleNavigate('/admin')}>Go to Admin</Button>
+                <Button onClick={() => handleNavigate(`/chat/${login_id}`)}>채팅방 접속</Button>
+                <Button onClick={() => handleNavigate('/mypage')}>마이페이지</Button>
+                <Button onClick={() => handleNavigate('/admin')}>관리자 페이지</Button>
+                <LogoutButton onClick={logoutHandler}>로그아웃</LogoutButton>
             </NavigationContainer>
         </PageWrapper>
     );
