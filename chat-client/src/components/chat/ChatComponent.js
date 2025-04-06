@@ -20,12 +20,20 @@ function ChatPage() {
     // const [token, setToken] = useState(null); // 로그인 토큰 상태
     const {token, login_id:recoilLoginId} = useRecoilValue(userState);
     const [bannedUsers, setBannedUsers] = useState(new Set());
+    const [page, setPage] = useState(0);
+    const [autoScroll, setAutoScroll] = useState(true);
     const setLoginId = useSetRecoilState(userState);
+    const [participantList, setParticipantList] = useState([]);
+
 
     const MYIP = "210.119.12.54";
     
     const navigate = useNavigate();
     const messagesEndRef = useRef(null);
+
+    useEffect(() => {
+        getAllMessages(0); // 초기 로딩
+      }, []);
 
     useEffect(() => {
         const storedUserId = localStorage.getItem("user_id");
@@ -58,12 +66,14 @@ function ChatPage() {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`,
                 },
-                body: JSON.stringify({ user_id: user_id, }),
+                body: JSON.stringify({ user_id: Number(user_id), }),
             });
             
             // const responseBody = await response.text(); // 로그 찍어보는 용. 나중에 지울 것
             if (response.status === 200) {
+                setUser_status(3);
                 console.log("User banned successfully.");
+                alert("채팅밴 완료")
                 
             } else {
                 console.error("Failed to ban user:", response.status);
@@ -88,7 +98,9 @@ function ChatPage() {
             
             // const responseBody = await response.text(); // 로그 찍어보는 용. 나중에 지울 것
             if (response.status === 200) {
+                setUser_status(1);
                 console.log("User unbanned successfully.");
+                alert("채팅밴 해제 완료")
                 
             } else {
                 console.error("Failed to unban user:", response.status);
@@ -176,20 +188,28 @@ function ChatPage() {
     }, [token, login_id, recoilLoginId]);
 
     // 메시지 목록 랜더링
-    // const getAllMessages = async () => {
-    //     try {
-    //         const response = await fetch(`http://localhost:8090/chat/getAllMessages`);
-    //         if (response.ok) {
-    //             const data = await response.json();
-    //             setMessages(data); // 메시지 목록 초기화
-    //             scrollToBottom();
-    //         } else {
-    //             console.error("Failed to fetch messages");
-    //         }
-    //     } catch (error) {
-    //         console.error("Error fetching messages:", error);
-    //     }
-    // };
+    const getAllMessages = async (page) => {
+        try {
+            const response = await fetch(`http://${MYIP}:8881/chat/messages?page=${page}`);
+            if (response.ok) {
+                const data = await response.json();
+                // setMessages(data); // 메시지 목록 초기화
+                setMessages(prev => [...data, ...prev]);
+                if (page === 0 && autoScroll) scrollToBottom();
+            } else {
+                console.error("Failed to fetch messages");
+            }
+        } catch (error) {
+            console.error("Error fetching messages:", error);
+        }
+    };
+
+    const loadOlderMessages = () => {
+        const nextPage = page + 1;
+        setAutoScroll(false); // 자동 스크롤 끄기
+        getAllMessages(nextPage);
+        setPage(nextPage);
+      };
 
     // 메시지 전송
     const sendMessageHandler = async () => {
@@ -209,8 +229,10 @@ function ChatPage() {
                         "Authorization" : `Bearer ${token}`,
                     },
                     body: JSON.stringify({
-                        user_id: storedUserId,
+                        user_id: Number(storedUserId),
+                        user_status: user_status,
                         msg_text: message, // 보낼 메시지
+                        user_name: user_name,
                     }),
                 });
 
@@ -219,8 +241,10 @@ function ChatPage() {
                     // 메시지 전송 후 메시지 목록 업데이트
                     // setMessages(prevMessages => [...prevMessages, { message }]);
                     setMessage(""); // 입력 필드 초기화
+                    setAutoScroll(true);
                 } else {
-                    console.error("Failed to send message");
+                    const data = await response.json();
+                    console.error("Failed to send message", response.status, data);
                 }
                 console.timeEnd("Message Send Time"); // 요청 끝나는 시간 측정
             } catch (error) {
@@ -244,43 +268,77 @@ function ChatPage() {
 
     // messages가 변경될 때마다 스크롤 맨 아래에 위치
     useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
+        if (autoScroll) {
+            scrollToBottom();
+        }
+    }, [messages, autoScroll]);
 
-
-    useEffect(() => {
-        // getAllMessages(); // 페이지 로드 시
-        // getUserStatus(user_id, "statCheck", 8080, token);
-    },[]);
+    const exitChatRoom = async () => {
+        const storedUserId = localStorage.getItem("user_id");
+        try {
+            const response = await fetch(`http://${MYIP}:8881/chat/exit`, {
+                method: "POST",
+                mode: "cors",
+                headers: {
+                    "Content-Type": "application/json",
+                    // "Authorization": `Bearer ${token}`,
+                },
+                body: JSON.stringify({ user_id: Number(storedUserId), }),
+            });
+            console.log("보내는 유저 정보:", storedUserId);
+            // const responseBody = await response.text(); // 로그 찍어보는 용. 나중에 지울 것
+            if (response.status === 200) {
+                // setUser_status(3);
+                console.log("Exit chat room successfully.");
+                navigate(`/gateway`);
+            } else {
+                console.error("Failed to exit chat room:", response.status);
+            }
+        } catch (error) {
+            console.error("exit error: ", error);
+        }
+    };
 
     // SSE 구독 (실시간 메시지 받기)
     useEffect(() => {
-        let eventSource = null;
+        const eventSourceRef = { current: null };
         let reconnectTimer = null;
     
         const connectSSE = () => {
-            eventSource = new EventSource(`http://${MYIP}:8881/chat/sse`);
-            console.log("SSE 객체 생성됨:", eventSource);
+            if (eventSourceRef.current) {
+                console.log("이전 SSE 닫기");
+                eventSourceRef.current.close();
+            }
     
-            eventSource.onopen = () => {
-                console.log("SSE 연결 성공! ReadyState:", eventSource.readyState);
+            const es = new EventSource(`http://${MYIP}:8881/chat/sse`);
+            eventSourceRef.current = es;
+            console.log("SSE 객체 생성됨:", es);
+    
+            es.onopen = () => {
+                console.log("SSE 연결 성공! ReadyState:", es.readyState);
             };
     
-            eventSource.onmessage = (event) => {
+            es.onmessage = (event) => {
                 console.log("SSE Received:", event.data);
-                // const parsedData = JSON.parse(event.data);
-                // console.log("Parsed Message Data:", parsedData);
-                // setMessages((prevMessages) => [...prevMessages, parsedData]);
-                setMessages((prevMessages) => [...prevMessages, { message: event.data }]);
-                // console.log("+++++++++++", messages.user_id)
+                const parsedData = JSON.parse(event.data);
+                if (parsedData.type === "participants") {
+                    const mappedParticipants = parsedData.participants.map(p => ({
+                        id: p.user_id,
+                        name: p.user_name
+                    }));
+                    console.log("참여자 목록 매핑 완료:", mappedParticipants);
+                    setParticipantList(mappedParticipants);
+                } else {
+                    setMessages((prevMessages) => [...prevMessages, parsedData]);
+                }
                 scrollToBottom();
             };
     
-            eventSource.onerror = (err) => {
+            es.onerror = (err) => {
                 console.error("SSE 연결 오류:", err);
-                eventSource.close();
+                es.close();
     
-                // 일정 시간 후 자동 재연결 (예: 3초 후)
+                // 일정 시간 후 자동 재연결
                 reconnectTimer = setTimeout(() => {
                     console.log("SSE 재연결 시도...");
                     connectSSE();
@@ -288,14 +346,15 @@ function ChatPage() {
             };
         };
     
-        connectSSE(); // 최초 연결
+        connectSSE();
     
         return () => {
-            console.log("SSE 연결 종료");
-            if (eventSource) eventSource.close();
+            console.log("SSE 완전 종료");
+            if (eventSourceRef.current) eventSourceRef.current.close();
             if (reconnectTimer) clearTimeout(reconnectTimer);
         };
     }, []);
+    
 
     // 채팅밴 버튼 핸들러
     const banUserHandler = async (login_id) => {
@@ -337,19 +396,41 @@ function ChatPage() {
         }
     };
 
-    // user_name -> participants에 추가
-    useEffect(() => {
-        if (user_name) {
-            setParticipants((prevParticipants) => [
-                ...prevParticipants,
-                { id: login_id, name: user_name },
-            ]);
-        }
-    }, [user_name, login_id]);
+    // 참여자 목록
+
+    const finalParticipants = [...participantList];
+
+    // 서버에 내 정보가 없을 경우만 추가
+    if (
+    typeof user_id === 'number' &&
+    user_name &&
+    !finalParticipants.some((p) => p.id === user_id)
+    ) {
+    finalParticipants.push({ id: user_id, name: user_name });
+    }
+
+    // const getUserNameById = (id) => {
+    //     const user = finalParticipants.find((p) => p.id === id);
+    //     return user ? user.name : "알 수 없음";
+    //   };
+
+    console.log("최종 참여자 ID 목록:", finalParticipants);
 
     useEffect(() => {
-        console.log("User status updated:", user_status);
-    }, [user_status]);
+        if (user_name && login_id) {
+            setParticipants((prevParticipants) => {
+                const alreadyExists = prevParticipants.some(p => p.id === user_id);
+                if (!alreadyExists) {
+                    return [...prevParticipants, {
+                        id: user_id,
+                        name: user_name,
+                        login_id: login_id
+                    }];
+                }
+                return prevParticipants;
+            });
+        }
+    }); //, [user_name, login_id]);
 
     return (
         <div className="page-wrapper">
@@ -357,10 +438,36 @@ function ChatPage() {
                 {/* 왼쪽: 채팅 영역 */}
                 <div className="chat-section">
                     <h2 className="title" onClick={() => navigate("/gateway")}>2025 부경대 IoT 개발자 과정 채팅방</h2>
+                    <button className="exit-button" onClick={exitChatRoom}>나가기</button>
 
                     {/* 채팅 메시지 표시 영역 */}
                     <div className="message-list">
-                    {messages.map((msg, index) => {
+                    <button className="load-button" onClick={loadOlderMessages}>
+                        이전 기록 불러오기
+                    </button>
+                    {messages.map((msg) => {
+                        const storedUserId = Number(localStorage.getItem("user_id"));
+                        const isMyMessage = Number(msg.user_id) === storedUserId;
+                        const senderName = msg.user_name || "알 수 없음";
+                        // const sender = finalParticipants.find((p) => p.id === Number(msg.user_id));
+                        // const senderName = sender ? sender.name : "알 수 없음";
+                        return (
+                            <div
+                                key={msg.timestamp || msg.id}
+                                className={`message-wrapper ${isMyMessage ? "my-message" : "other-message-wrapper"}`}
+                            >
+                                {/* <div className="sender-name">{senderName}</div> */}
+                                {!isMyMessage && <div className="sender-name">{senderName}</div>}
+                                <div className={isMyMessage ? "message" : "other-message"}>
+                                    {msg.msg_text}
+                                </div>
+                            </div>
+                            // <div key={msg.timestamp || msg.id} className={isMyMessage ? "message" : "other-message"}>
+                            //     {msg.msg_text}
+                            // </div>
+                        );
+                    })}
+                    {/* {messages.map((msg, index) => {
                         const storedUserId = Number(localStorage.getItem("user_id"));
                         // console.log("로컬스토리지: ", storedUserId);
                         // console.log("메시지 user_id: ", Number(msg.user_id));
@@ -368,10 +475,10 @@ function ChatPage() {
                         // console.log("isMyMessage : ", isMyMessage);
                         return (
                             <div key={index} className={isMyMessage ? "message" : "other-message"}>
-                                {msg.message}
+                                {msg.msg_text}
                             </div>
                         );
-                    })}
+                    })} */}
                     <div ref={messagesEndRef} />
                     </div>
 
@@ -396,27 +503,27 @@ function ChatPage() {
 
                 {/* 오른쪽: 참여자 목록 */}
                 <div className="participants-container">
-                    <h3 className="participants-title">참여자 목록</h3>
-                    {participants.map((participant) => (
-                        <div key={participant.name} className="participant">
+                    <h3 className="participants-title">채팅 멤버</h3>
+                    {finalParticipants.map((participant) => (
+                        <div key={participant.id} className="participant">
                             <div className="participant-name">
                                 {participant.name}
                             </div>
                             {/* 관리자일 때만 채팅밴 버튼 활성화 */}
-                            {user_status === 0 && (
+                            {/* {user_status === 0 && (
                                 <div className="ban-buttons">
                                     <BanButton
                                         title="채팅밴"
                                         className={bannedUsers.has(participant.id) ? "ban-button red" : "ban-button"}
-                                        onClick={() => banUserHandler(participant.id)}
+                                        onClick={() => banUserChat("chat/admin/ban", 8080, participant.id)}
                                     />
                                     <BanButton
                                         title="해제"
                                         className="unban-button"
-                                        onClick={() => unbanUserHandler(participant.id)}
+                                        onClick={() => banUserChat("chat/admin/ban", 8080, participant.id)}
                                     />
                                 </div>
-                            )}
+                            )} */}
                         </div>
                     ))}
                 </div>

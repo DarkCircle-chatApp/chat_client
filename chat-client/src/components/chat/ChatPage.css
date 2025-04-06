@@ -49,16 +49,67 @@
   height: 75%;
   overflow-y: auto;
   background-color: #f0f4f8;
-  border-radius: 8px;
   padding: 16px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
+  gap: 6px;
+}
+
+/* 메시지 박스를 감싸는 컨테이너 */
+.message-wrapper {
+  display: flex;
+  flex-direction: column;
+  max-width: 70%;
+}
+
+/* 내 메시지 우측 정렬 */
+.my-message {
+  align-self: flex-end;
   align-items: flex-end;
 }
 
-/* 개별 메시지 스타일 */
+/* 상대 메시지 좌측 정렬 */
+.other-message-wrapper {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+/* 보낸 사람 이름 */
+.sender-name {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 2px;
+}
+
+/* 메시지 말풍선 */
+.message,
+.other-message {
+  display: inline-block;
+  padding: 12px 14px;
+  border-radius: 16px;
+  font-size: 18px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background-color: lightblue; /* 기본값, 아래서 덮어씀 */
+  color: #000;
+}
+
+/* 내 메시지 말풍선 */
 .message {
+  background-color: #d1e9ff;
+  text-align: left;
+}
+
+/* 상대 메시지 말풍선 */
+.other-message {
+  background-color: #e4e4ec;
+  text-align: left;
+}
+
+
+/* 개별 메시지 스타일 */
+/* .message {
   padding: 8px;
   margin: 8px 0;
   border-radius: 8px;
@@ -77,12 +128,12 @@
   border-radius: 8px;
   align-self: flex-start;
   background-color: rgb(197, 196, 228); /* 상대방 메시지 색 */
-  max-width: 80%;
+  /* max-width: 80%;
   word-wrap: break-word;
   font-size: 20px;
   font-family: 'Nanum Gothic', sans-serif;
   white-space: pre-line;
-}
+} */
 
 /* 메시지 입력 영역 */
 .message-input-container {
@@ -134,9 +185,9 @@
 .participant {
   width: 80%;
   display: flex;
-  justify-content: space-between; /* 이름과 버튼을 양쪽 끝에 배치 */
+  justify-content: center; /* 이름과 버튼을 양쪽 끝에 배치 */
   padding: 5px;
-  background-color: white;
+  background-color: rgb(195, 217, 245);
   border-radius: 12px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   text-align: center;
@@ -189,6 +240,64 @@
   font-size: 18px;
   font-weight: bold; /* 이름이 남은 공간을 차지하도록 */
 }
+
+.load-button {
+  background-color: #ffffff;
+  color: #007bff;
+  border: 1px solid #007bff;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin: 12px auto;
+  display: block;
+  transition: all 0.2s ease;
+}
+
+.load-button:hover {
+  background-color: #007bff;
+  color: white;
+}
+
+.exit-button {
+  background-color: #ff4d4f;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin: 12px auto;
+  display: block;
+  transition: background-color 0.2s ease;
+}
+
+.exit-button:hover {
+  background-color: #d9363e;
+}
+
+/* .sender-name {
+  font-size: 13px;
+  font-weight: bold;
+  color: #666; */
+  /* margin: 4px 0 2px 8px; */
+  /* margin-bottom: 4px;
+  margin-left: 10px;
+  margin-top: 10px;
+  /* text-align: left; */
+  /* align-self: flex-start; 
+} */
+/* .sender-name {
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 4px;
+  padding-left: 4px;
+  justify-content: flex-end;
+  text-align: left;
+} */
 
 /* .banned {
   background-color: red !important;

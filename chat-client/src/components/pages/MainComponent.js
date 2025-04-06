@@ -138,6 +138,7 @@ function LoginPage() {
                     localStorage.setItem("token", data.token);
                     localStorage.setItem("user_id", data.user_id);
                     localStorage.setItem("user_name", data.user_name);
+                    localStorage.setItem("login_id", data.login_id);
                     // recoil 상태에 사용자 정보 설정
                     setUser({
                         token: data.token,

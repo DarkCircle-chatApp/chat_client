@@ -4,6 +4,8 @@ import { FaBan } from "react-icons/fa"; // 차단 아이콘
 import { FaUndo } from "react-icons/fa"; // 되돌리기 아이콘
 import { useRecoilValue } from "recoil";
 import { userState } from "../state/UserState";
+import Loading from "../load/Loading";
+
 
 // 스타일링
 const PageWrapper = styled.div`
@@ -95,6 +97,7 @@ const UserHeader = styled.li`
 function AdminComponent() {
     const [users, setUsers] = useState([]);
     const {token, login_id:recoilLoginId} = useRecoilValue(userState);
+    const [loading, setLoading] = useState(false); // 로딩 상태
     // const [user_id, setUser_id] = useState([]);
     // const [user_name, setUser_name] = useState([]);
     // const [login_id, setLogin_id] = useState([]);
@@ -103,8 +106,10 @@ function AdminComponent() {
     // 유저 목록 조회
     const fetchUsers = async () => {
         try {
+            setLoading(true);
             const response = await fetch(`http://localhost:8080/chat/admin/admin_select`);
             if (response.ok) {
+                setLoading(false);
                 const data = await response.json();
                 const usersData = data.map(user => ({
                     user_id: user.user_id,
@@ -128,6 +133,7 @@ function AdminComponent() {
     // 유저 차단
     const handleBanUser = async (user_id) => {
         try {
+            setLoading(true);
             const response = await fetch(`http://localhost:8080/chat/admin/user_delete`, {
                 method: "PUT",
                 mode: "cors",
@@ -138,6 +144,7 @@ function AdminComponent() {
             });
 
             if (response.ok) {
+                setLoading(false);
                 fetchUsers();
                 alert("User has been banned.");
             } else {
@@ -150,6 +157,7 @@ function AdminComponent() {
 
     const handleUnbanUser = async (user_id) => {
         try {
+            setLoading(true);
             const response = await fetch(`http://localhost:8080/chat/admin/unban`, {
                 method: "PUT",
                 mode: "cors",
@@ -160,6 +168,7 @@ function AdminComponent() {
             });
 
             if (response.ok) {
+                setLoading(false);
                 fetchUsers();
                 alert("차단이 해제되었습니다.");
             } else {
@@ -172,6 +181,7 @@ function AdminComponent() {
 
     const handleAdminStat = async (user_id) => {
         try {
+            setLoading(true);
             const response = await fetch(`http://localhost:8080/chat/admin/status_update`, {
                 method: "PUT",
                 mode: "cors",
@@ -182,6 +192,7 @@ function AdminComponent() {
             });
 
             if (response.ok) {
+                setLoading(false);
                 fetchUsers();
                 alert("관리자 설정 완료");
             } else {
@@ -204,6 +215,7 @@ function AdminComponent() {
 
     return (
         <PageWrapper>
+            {loading ? <Loading /> : null}
             <AdminContainer>
                 <Title>Admin Dashboard</Title>
                 <UserList>
