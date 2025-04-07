@@ -64,7 +64,7 @@ const BanButton = styled.button`
     color: white;
     border: none;
     border-radius: 5px;
-    padding: 8px 15px;
+    padding: 8px 10px;
     cursor: pointer;
     font-size: 14px;
     display: flex;
@@ -221,8 +221,8 @@ function AdminComponent() {
                 <UserList>
                     <UserHeader>
                         <span>Name</span>
-                        <span>ID</span>
-                        <span>Status</span>
+                        <span>ID / Status</span>
+                        {/* <span>Status</span> */}
                         <span>Controller</span>
                     </UserHeader>
                     {users.map(user => (
@@ -230,6 +230,9 @@ function AdminComponent() {
                             <span>{user.user_name}</span>
                             <span>{user.login_id}</span>
                             <span>{getStatusText(user.user_status)}</span>
+                            <BanButton onClick={() => handleBanUser(user.user_id)}>
+                                <FaBan /> Chat Ban
+                            </BanButton>
                             <BanButton onClick={() => handleBanUser(user.user_id)}>
                                 <FaBan /> Ban
                             </BanButton>

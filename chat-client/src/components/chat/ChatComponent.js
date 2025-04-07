@@ -69,7 +69,6 @@ function ChatPage() {
                 body: JSON.stringify({ user_id: Number(user_id), }),
             });
             
-            // const responseBody = await response.text(); // 로그 찍어보는 용. 나중에 지울 것
             if (response.status === 200) {
                 setUser_status(3);
                 console.log("User banned successfully.");

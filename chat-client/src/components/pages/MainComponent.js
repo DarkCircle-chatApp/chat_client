@@ -155,7 +155,7 @@ function LoginPage() {
                 }
             } catch (error) {
                 console.error("Error message: ", error);
-                alert("아이디 또는 비밀번호가 일치하지 않습니다.");
+                alert("ID / PW가 일치하지 않거나 차단된 사용자 입니다.");
                 setLoading(false); // 로딩 종료
             }
 

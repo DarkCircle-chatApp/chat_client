@@ -225,6 +225,7 @@ function MyPage() {
                 navigate(`/`);
             } else {
                 alert("비밀번호 변경에 실패했습니다.");
+                setLoading(false); // 로딩 끝
             }
         } catch (error) {
             console.error("비밀번호 변경 실패:", error);
