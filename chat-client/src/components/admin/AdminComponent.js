@@ -41,6 +41,8 @@ const UserList = styled.ul`
     list-style: none;
     width: 100%;
     padding: 0;
+    height: 100%;
+    overflow-y: auto;
 `;
 
 const UserItem = styled.li`
